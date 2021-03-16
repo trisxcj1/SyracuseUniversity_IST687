@@ -1,0 +1,54 @@
+# Setup
+```{r}
+myCars <- mtcars
+
+```
+
+# Step 1: What is the hp
+```{r}
+# Question 1
+max(myCars$hp) # 335
+
+# Question 2
+which.max(myCars$hp) # Index 31
+myCars[31,] # Maserati Bora
+
+```
+
+# Step 2: Explore mpg
+```{r}
+# Question 3
+max(myCars$mpg) # 33.9
+
+# Question 4
+which.max(myCars$mpg) # Index 20
+myCars[20, ] # Toyota Corolla
+
+# Question 5
+myCars_sorted <- myCars[order(myCars$mpg),]
+
+```
+
+# Step 3: Which car has the "best" combination of mpg and hp
+```{r}
+# Question 6
+## The appropriate logic for this question is to find the car with the best ratio of mpg to hp
+## The car which meets this criteria will have the highest ratio
+
+# Question 7
+which.max(myCars$mpg/myCars$hp) # Index 19
+myCars[19,] # Honda Civic
+
+```
+
+# Step 4: Which car has "best" car combination of mpg and hp, where mpg and hp must be given equal weight?
+```{r}
+# For this question, it would be appropriate to scale mpg and hp
+# Then find the car (index) which has the max combination of the scaled variables
+myCars$mpg_scaled <- scale(myCars$mpg)
+myCars$hp_scaled <- scale(myCars$hp)
+myCars$mpg_hp_scaled_combination <- myCars$mpg_scaled + myCars$hp_scaled
+which.max(myCars$mpg_hp_scaled_combination) # Index 31
+myCars[31, ] # Maserati Bora
+
+```
