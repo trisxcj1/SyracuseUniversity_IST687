@@ -1,0 +1,180 @@
+# Packages
+```{r}
+library(tidyverse)
+library(ggthemes)
+library(reshape2)
+
+```
+
+# Step 1: Load the data
+```{r}
+# Loading the airquality data and saving it in a new df
+my_airquality <- airquality
+
+```
+
+# Step 2: Clean the data
+```{r}
+# Checking the summary of the df
+summary(my_airquality)
+# There are NAs in $Ozone and $Solar.R
+
+# Imputing the means for NA observations
+my_airquality$Ozone[is.na(my_airquality$Ozone)==T] <- mean(my_airquality$Ozone, na.rm=T)
+my_airquality$Solar.R[is.na(my_airquality$Solar.R)==T] <- mean(my_airquality$Solar.R, na.rm=T)
+
+# Now that all NAs have been imputed, the sum of NAs should be 0
+sum(is.na(my_airquality)) # 0
+
+```
+
+# Step 3: Understand the data distribution
+```{r}
+# $Ozone histogram
+ggplot(data=my_airquality, mapping=aes(Ozone)) +
+  geom_histogram(binwidth=20, col=2, fill=1) +
+  ylab("Frequency") +
+  xlab("Ozone") +
+  ggtitle("Distribution of Ozone") +
+  theme_tufte()
+
+# $Solar.R histogram
+ggplot(data=my_airquality, mapping=aes(Solar.R)) +
+  geom_histogram(binwidth=20, col=2, fill=1) +
+  ylab("Frequency") +
+  xlab("Solar Radiation") +
+  ggtitle("Distribution of Solar Radiation") +
+  theme_tufte()
+
+# $Wind histogram
+ggplot(data=my_airquality, mapping=aes(Wind)) +
+  geom_histogram(binwidth=5, col=2, fill=1) +
+  ylab("Frequency") +
+  xlab("Average Wind Speed") +
+  ggtitle("Distribution of Average Wind Speed") +
+  theme_tufte()
+
+# $Temp histogram
+ggplot(data=my_airquality, mapping=aes(Temp)) +
+  geom_histogram(binwidth=5, col=2, fill=1) +
+  ylab("Frequency") +
+  xlab("Maximum Daily Temperature") +
+  ggtitle("Distribution of Maximum Daily Temperature") +
+  theme_tufte()
+
+# $Month histogram
+ggplot(data=my_airquality, mapping=aes(Month)) +
+  geom_histogram(binwidth=1, col=2, fill=1) +
+  ylab("Frequency") +
+  xlab("Month of year") +
+  ggtitle("Distribution of Months") +
+  theme_tufte()
+
+# $Day histogram
+ggplot(data=my_airquality, mapping=aes(Day)) +
+  geom_histogram(binwidth=1, col=2, fill=1) +
+  ylab("Frequency") +
+  xlab("Day of week") +
+  ggtitle("Distribution of Days") +
+  theme_tufte()
+
+# $Ozone boxplot
+ggplot(data=my_airquality, mapping=aes(x=factor(0), y=Ozone)) +
+  geom_boxplot(col=1, fill=4) +
+  xlab("") +
+  ylab("Ozone") +
+  ggtitle("Distribution of Ozone (Boxplot)") +
+  theme_tufte()
+
+# $Wind boxplot
+ggplot(data=my_airquality, mapping=aes(x=factor(0), y=round(Wind))) +
+  geom_boxplot(col=1, fill=4) +
+  xlab("") +
+  ylab("Average Wind Speed") +
+  ggtitle("Distribution of Average Wind Speed (Boxplot)") +
+  theme_tufte()
+
+
+```
+
+# Step 3: Explore how the data changes over time
+```{r}
+# Need to create a `Date` column.
+# The data are from 1973. Therefore, construct the `Date` object using $Month, $Day and 1973
+my_airquality$Date <- as.Date(paste(my_airquality$Month, my_airquality$Day, "1973", sep="/"), format="%m/%d/%Y")
+str(my_airquality)
+
+# $Ozone line chart
+ggplot(data=my_airquality, mapping=aes(y=Ozone, x=Date)) +
+  geom_line() +
+  ylab("Ozone") +
+  ggtitle("Ozone Over Time") +
+  theme_tufte()
+
+# $Temp line chart
+ggplot(data=my_airquality, mapping=aes(y=Temp, x=Date)) +
+  geom_line() +
+  ylab("Maximum Daily Temperature") +
+  ggtitle("Maximum Daily Temperature Over Time") +
+  theme_tufte()
+
+# $Wind line chart
+ggplot(data=my_airquality, mapping=aes(y=Wind, x=Date)) +
+  geom_line() +
+  ylab("Average Wind Speed") +
+  ggtitle("Average Wind Speed Over Time") +
+  theme_tufte()
+
+# $Solar.R line chart
+ggplot(data=my_airquality, mapping=aes(y=Solar.R, x=Date)) +
+  geom_line() +
+  ylab("Solar Radiation") +
+  ggtitle("Solar Radiation Over Time") +
+  theme_tufte()
+
+# Line chart with all 4 variables
+cols <- c(
+  "Ozone" = "royalblue",
+  "Maximum Daily Temperature" = "darkred",
+  "Average Wind Speed" = "green4",
+  "Solar Radiation" = "orange"
+)
+ggplot(data=my_airquality) +
+  geom_line(mapping=aes(x=Date, y=Ozone, col="Ozone")) +
+  geom_line(mapping=aes(x=Date, y=Temp, col="Maximum Daily Temperature")) +
+  geom_line(mapping=aes(x=Date, y=Wind, col="Average Wind Speed")) +
+  geom_line(mapping=aes(x=Date, y=Solar.R, col="Solar Radiation")) +
+  scale_color_manual(name="Variables", values=cols) +
+  ylab("") +
+  ggtitle("Daily Air Quality Measurements") +
+  theme_tufte()
+
+```
+
+# Step 4: Look at all the data via a heatmap
+```{r}
+# Reshaping the data 
+my_airquality_reshaped <- melt(my_airquality[, c(1:4, 7)], id="Date")
+
+# Generating the heat map
+ggplot(data=my_airquality_reshaped, mapping=aes(x=Date, y=variable)) +
+  geom_tile(aes(fill=value)) +
+  scale_fill_gradient(low="white", high="darkred")+
+  ggtitle("Daily Air Quality Measurements (Heatmap)") +
+  ylab("Variable") + 
+  xlab("Date") +
+  theme_tufte()
+
+```
+
+# Step 5: Look at all the data via a scatter chart
+```{r}
+# Generating the scatter plot
+ggplot(data=my_airquality, mapping=aes(x=Wind, y=Temp, size=Ozone, color=Solar.R)) +
+  geom_point() +
+  xlab("Average Wind Speed") +
+  ylab("Maximum Daily Temperature") +
+  ggtitle("Relationship Between Max Daily Temperature & Avg Wind Speed") +
+  theme_tufte()
+
+```
