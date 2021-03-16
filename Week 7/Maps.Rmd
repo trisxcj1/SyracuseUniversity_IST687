@@ -1,0 +1,184 @@
+
+# Set up
+```{r}
+library(tidyverse)
+library(gdata)
+library(zipcode)
+library(ggthemes)
+library(openintro)
+library(ggmap)
+library(tmaptools)
+library(readxl)
+
+```
+
+# Step 1: Load the data
+```{r}
+# Read the data
+df <- read_excel(local_data_path, col_types=c("numeric", "numeric", "numeric", "numeric"), skip=1)
+
+# Clean up the dataframe
+# -- renaming the columns
+df_col_names <- c("zip", "median", "mean", "population")
+colnames(df) <- df_col_names
+
+# -- running a summary on the df
+summary(df)
+
+# -- removing NAs in the df
+df <- df[complete.cases(df), ]
+
+# -- running a summary on the df
+summary(df) # no more NAs
+
+# Load the zip code information
+data("zipcode")
+zipcode_df <- data.frame(zipcode)
+
+# -- the zip in df (df$zip) needs to have '0' as prefixes
+df$zip <- zipcode::clean.zipcodes(df$zip)
+
+
+# Merge the zip code information from the two data frames
+df_merged <- df %>% 
+  inner_join(zipcode_df, by=c("zip"))
+
+# Remove Hawaii and Alaska
+length(unique(df_merged$state))
+"HI" %in% unique(df_merged$state)
+"AK" %in% unique(df_merged$state)
+
+df_merged <- df_merged %>% 
+  filter(!grepl("HI", state)) %>% 
+  filter(!grepl("AK", state))
+"HI" %in% unique(df_merged$state)
+"AK" %in% unique(df_merged$state)
+length(unique(df_merged$state))
+
+# -- there are supposed to be 48 states but there are currently 49
+# -- checking whether DC is within df_merged and removing it
+"DC" %in% unique(df_merged$state)
+
+df_merged <- df_merged %>% 
+  filter(!grepl("DC", state))
+
+"DC" %in% unique(df_merged$state)
+length(unique(df_merged$state))
+
+```
+
+# Step 2: Show the income & population per state
+```{r}
+# -- creating the dfStates df
+dfStates <- data.frame(state.abb, state.name)
+dfStates$state.name <- tolower(dfStates$state.name)
+dfStates_col_names <- c("state", "state_name")
+colnames(dfStates) <- dfStates_col_names
+
+# Create a simpler dataframe, with just the average median income and the population for each state
+income_by_state_df <- df_merged %>% 
+  select(state, median, population) %>% 
+  group_by(state) %>% 
+  summarise(
+    average_median_income = mean(median),
+    total_population = sum(population)
+  ) %>% 
+  inner_join(dfStates, by=c("state"))
+
+# Show the US map, representing the color with the average median income of that state
+us_map <- map_data("state")
+ggplot(income_by_state_df, aes(map_id = state_name)) +
+  geom_map(map=us_map, aes(fill = average_median_income)) +
+  expand_limits(x=us_map$long, y=us_map$lat) +
+  coord_map() +
+  scale_fill_gradient(low="lightgreen", high="darkgreen", name="Average Median Income") +
+  xlab("Longitude") +
+  ylab("Latitude") +
+  ggtitle("U.S. Average Median Income by State") +
+  theme_tufte()
+
+# Show the US map, representing the color with the population of that state
+ggplot(income_by_state_df, aes(map_id = state_name)) +
+  geom_map(map=us_map, aes(fill = total_population)) +
+  expand_limits(x=us_map$long, y=us_map$lat) +
+  coord_map() +
+  scale_fill_gradient(low="lightblue", high="darkblue", name="Total Population") +
+  xlab("Longitude") +
+  ylab("Latitude") +
+  ggtitle("U.S. Total Population by State") +
+  theme_tufte()
+
+```
+
+# Step 3: Show the income per zip code
+```{r}
+income_by_zip_df <- df_merged %>% 
+  select(state, median, population, longitude, latitude) %>%
+  inner_join(dfStates, by=c("state"))
+
+# Income by zip code (where the color of the dot is based in the income) 
+ggplot(income_by_zip_df, aes(map_id = state_name)) +
+  geom_map(map=us_map) +
+  expand_limits(x=us_map$long, y=us_map$lat) +
+  coord_map() +
+  geom_point(aes(x=longitude, y=latitude, color=median)) +
+  xlab("Longitude") +
+  ylab("Latitude") +
+  ggtitle("U.S. Median Income by Zip Code") +
+  theme_tufte()
+
+```
+
+# Step 4: Show zip code density
+```{r}
+# Zip code density
+ggplot(income_by_zip_df, aes(map_id = state_name)) +
+  geom_map(map=us_map) +
+  expand_limits(x=us_map$long, y=us_map$lat) +
+  coord_map() +
+  geom_point(aes(x=longitude, y=latitude, color=median)) +
+  geom_density_2d(income_by_zip_df, mapping =aes(x=longitude, y=latitude)) +
+  xlab("Longitude") +
+  ylab("Latitude") +
+  ggtitle("U.S. Income per Zip Code") +
+  theme_tufte()
+
+```
+
+# Step 5: Zoom into the region around NYC
+```{r}
+# -- determining NYC's coordinates
+nyc_coordinates <- geocode_OSM("New York, NY", return.first.only=T, server="http://nominatim.openstreetmap.org")
+nyc_longitude <- nyc_coordinates$coords[1]
+nyc_latitude <- nyc_coordinates$coords[2]
+
+# Income by zip code, centered around NY (where the color of the dot is based in the income) 
+ggplot(income_by_zip_df, aes(map_id = state_name)) +
+  geom_map(map=us_map) +
+  expand_limits(x=us_map$long, y=us_map$lat) +
+  coord_map() +
+  geom_point(aes(x=longitude, y=latitude, color=median)) +
+  xlim(nyc_longitude - 10, nyc_longitude + 10) +
+  ylim(nyc_latitude - 10, nyc_latitude + 10) +
+  geom_point(aes(nyc_longitude, nyc_latitude), color="green", size=3) +
+  xlab("Longitude") +
+  ylab("Latitude") +
+  ggtitle("Median Income by Zip Code\n(Centered around New York)") +
+  theme_tufte()
+
+# Zip code density, centered around NY
+ggplot(income_by_zip_df, aes(map_id = state_name)) +
+  geom_map(map=us_map) +
+  expand_limits(x=us_map$long, y=us_map$lat) +
+  coord_map() +
+  geom_point(aes(x=longitude, y=latitude, color=median)) +
+  geom_density_2d(income_by_zip_df, mapping=aes(x=longitude, y=latitude)) +
+  xlim(nyc_longitude - 10, nyc_longitude + 10) +
+  ylim(nyc_latitude - 10, nyc_latitude + 10) +
+  geom_point(aes(nyc_longitude, nyc_latitude), color="green", size=3) +
+  xlab("Longitude") +
+  ylab("Latitude") +
+  ggtitle("Median Income by Zip Code\n(Centered around New York)") +
+  theme_tufte()
+
+```
