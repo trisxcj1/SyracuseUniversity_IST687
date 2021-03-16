@@ -1,0 +1,129 @@
+# Packages
+```{r}
+library(tm)
+library(tidytext)
+library(tidyverse)
+
+```
+
+# Step 1
+```{r}
+# Reading in the data
+affin <- read.delim(afinn_data_path)
+mlk <- readLines(mlk_data_path)
+
+# Filtering out blank lines
+mlk <- mlk[which(mlk != "")]
+
+```
+
+# Step 2
+```{r}
+# Creating the Vector Source & Corpus
+mlk_VSource <- VectorSource(mlk)
+mlk_VCorpus <- Corpus(mlk_VSource)
+mlk_VCorpus
+
+# Cleaning the VCorpus
+mlk_VCorpus <- tm_map(mlk_VCorpus, content_transformer(tolower))
+mlk_VCorpus <- tm_map(mlk_VCorpus, removePunctuation)
+mlk_VCorpus <- tm_map(mlk_VCorpus, removeNumbers)
+mlk_CleanedVCorpus <- tm_map(mlk_VCorpus, removeWords, stopwords("en"))
+
+# Creating a TDM
+mlk_TDM <- TermDocumentMatrix(mlk_CleanedVCorpus)
+mlk_TDM_matrix <- as.matrix(mlk_TDM)
+head(sort(rowSums(mlk_TDM_matrix), decreasing=T))
+
+# Creating a vectors contains word counts and words with the TDM
+mlk_WordCounts <- rowSums(mlk_TDM_matrix)
+mlk_Words <- names(mlk_WordCounts)
+
+# Calculating the score for the MLK speech using AFFIN
+mlk_affin_MatchedWords <- match(mlk_Words, affin$Word, nomatch=0)
+mlk_affin_MatchedScores <- as.numeric(affin$Score[mlk_affin_MatchedWords])
+mlk_affin_Matches <- mlk_WordCounts[which(mlk_affin_MatchedWords != 0)]
+
+mlk_affin_score <- sum(mlk_affin_MatchedScores * mlk_affin_Matches)
+mlk_affin_max_negative_score <- sum(-5 * mlk_affin_Matches)
+mlk_affin_max_positive_score <- sum(5 * mlk_affin_Matches)
+
+print("The overall score for the MLK speech using the AFINN word list is: " + as.String(mlk_affin_score) + " (" + as.String(round(mlk_affin_score/sum(mlk_WordCounts) * 100, 1)) + "%)")
+print("The range for this score was " + as.String(mlk_affin_max_negative_score) + " to " + as.String(mlk_affin_max_positive_score))
+
+```
+
+# Step 3
+```{r}
+# Creating a function to calculate the sentiment score
+calculate_sentiment_score <- function(cleaned_corpus){
+  
+  # This function accepts a cleaned vector corpus as input
+  # Creates a TDM
+  # Determines the matching words from the AFFIN data set
+  # Returns a sentiment percentage
+  
+  print("Input should already be cleaned.")
+  print("Creating the TDM...")
+  TDM <- TermDocumentMatrix(cleaned_corpus)
+  TDM_matrix <- as.matrix(TDM)
+  
+  print("Generating the word counts...")
+  WordCounts <- rowSums(TDM_matrix)
+  Words <- names(WordCounts)
+  
+  print("Determining which words matched from the Affinity words list...")
+  MatchedWords <- match(Words, affin$Word, nomatch=0)
+  MatchedScores <- as.numeric(affin$Score[MatchedWords])
+  Matches <- WordCounts[which(MatchedWords != 0)]
+  
+  print("Calculating the the score...")
+  sentiment_percentage <- sum(MatchedScores * Matches)/sum(WordCounts)
+  
+  print("Done.")
+  return(sentiment_percentage)
+}
+
+# Dividing the MLK speech into quarters
+cutoff_point <- round(length(mlk_CleanedVCorpus)/4)
+mlk_Q1 <- mlk_CleanedVCorpus[1:(cutoff_point + 1)]
+mlk_Q2 <- mlk_CleanedVCorpus[(cutoff_point + 1):(2 * cutoff_point)]
+mlk_Q3 <- mlk_CleanedVCorpus[(2 * cutoff_point + 1):(3 * cutoff_point)]
+mlk_Q4 <- mlk_CleanedVCorpus[(3 * cutoff_point + 1):(4 * cutoff_point + 1)]
+
+# Calculating the sentiment percentage for each quarter of the MLK speech
+mlk_Q1_SentimentScore <- calculate_sentiment_score(mlk_Q1)
+print("The score for the first 25% of the MLK speech is: " + as.String(round(mlk_Q1_SentimentScore * 100, 1)) + "%")
+
+mlk_Q2_SentimentScore <- calculate_sentiment_score(mlk_Q2)
+print("The score for the second 25% of the MLK speech is: " + as.String(round(mlk_Q2_SentimentScore * 100, 1)) + "%")
+
+mlk_Q3_SentimentScore <- calculate_sentiment_score(mlk_Q3)
+print("The score for the third 25% of the MLK speech is: " + as.String(round(mlk_Q3_SentimentScore * 100, 1)) + "%")
+
+mlk_Q4_SentimentScore <- calculate_sentiment_score(mlk_Q4)
+print("The score for the fourth 25% of the MLK speech is: " + as.String(round(mlk_Q4_SentimentScore * 100, 1)) + "%")
+
+```
+
+# Step 4
+```{r}
+# Creating a vector with the sentiment percentages by quarter
+mlk_sentiment_score_by_quarter <- c(
+  mlk_Q1_SentimentScore * 100,
+  mlk_Q2_SentimentScore * 100,
+  mlk_Q3_SentimentScore * 100,
+  mlk_Q4_SentimentScore * 100
+)
+
+# Creating a bar plot showing the sentiment percentage by quarter
+barplot(
+  mlk_sentiment_score_by_quarter,
+  col=c("darkred", "pink", "lightgreen", "darkgreen"),
+  legend.text=c("First 25%", "Second 25%", "Third 25%", "Fourth 25%"),
+  main = "MLK Speech Sentiment Percentage by Quarter",
+  ylab="Sentiment Percentage (%)",
+  xlab="Quarter"
+)
+
+```
