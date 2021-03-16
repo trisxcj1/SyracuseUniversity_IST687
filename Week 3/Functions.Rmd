@@ -1,0 +1,93 @@
+# Step 1 & Step 2
+```{r}
+
+readStates <- function(url){
+  # This function accepts a url data path as a string input
+  # Returns a cleaned dataframe
+  
+  # Using the `read.csv` function to load the data from the input url
+  df <- read.csv(url)
+  
+  # Filtering out rows that are not states
+  df <- df[9:59,]
+  
+  # Filtering out unnamed columns
+  df <- df[, 1:5]
+  
+  # Renaming the columns so that they are appropriately named
+  df_ColumnNames <- c("stateName", "base2010", "base2011", "Jul2010", "Jul2011")
+  names(df) <- df_ColumnNames
+  
+  # Ensuring that the last 4 columns are not strings
+  df$base2010 <- as.numeric((gsub(",", "", df$base2010)))
+  df$base2011 <- as.numeric((gsub(",", "", df$base2011)))
+  df$Jul2010 <- as.numeric((gsub(",", "", df$Jul2010)))
+  df$Jul2011 <- as.numeric((gsub(",", "", df$Jul2011)))
+  
+  # Removing the "." from stateName
+  df$stateName <- gsub("\\.", "", df$stateName)
+  
+  return(df)
+}
+
+```
+
+# Step 3
+```{r}
+# Saving the input URL as a variable
+myURL <- "http://www2.census.gov/programs-surveys/popest/tables/2010-2011/state/totals/nst-est2011-01.csv"
+
+# Storing the dataset into a dataframe
+dfStates <- readStates(myURL)
+
+mean(dfStates$Jul2011) 
+# The mean of the July2011 data is 6109645
+
+```
+
+# Step 4
+```{r}
+max(dfStates$Jul2011)
+# Based on July2011 data, the population of the state with the highest population is 37691912
+
+which.max(dfStates$Jul2011)
+# Based on July2011 data, the state with the highest population is at index 5
+dfStates[5,] # The state is California
+
+# Sorting the data in increasing order based on the July2011 data
+dfStates[order(dfStates$Jul2011, decreasing=F),]
+
+```
+
+# Step 5
+```{r}
+
+calculateCumulativePercentage <- function(vector, number){
+  # This function accepts two inputs
+  # A vector input and an integer input
+  # The function returns the percentage of elements within the vector which is less than the input integer
+  
+  # ordering and determining the size of the input vector
+  vector <- sort(vector)
+  vector_length <- length(vector)
+  
+  # determining how many elemets of the vector are less than the input integer
+  limit <- 0
+  for (i in vector){
+    if (i < number){
+      limit <- limit + 1
+    }
+  }
+  
+  # calculating the cumulative percentage
+  cumulative_percentage <- limit/vector_length
+  return(cumulative_percentage)
+}
+
+# Testing the function using the dfStates data
+calculateCumulativePercentage(
+  vector = dfStates$Jul2011,
+  number = mean(dfStates$Jul2011)
+)
+
+```
