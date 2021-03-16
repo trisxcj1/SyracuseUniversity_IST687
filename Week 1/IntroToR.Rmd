@@ -1,0 +1,61 @@
+# Creating the variables
+```{r}
+
+height	<- c(59,60,61,58,67,72,70)
+weight	<- c(150,140,180,220,160,140,130)
+a	<- 150
+
+```
+
+# Step 1
+```{r}
+# Question 1
+mean(height) # 63.85714
+
+# Question 2
+mean(weight) # 160
+
+# Question 3
+length(height) # 7
+length(weight) # 7
+
+# Question 4
+sum(height) # 447
+
+# Question 5
+sum(height)/length(height) # 63.85714
+## This outputs the same value as the mean function
+
+sum(weight)/length(weight) # 160
+## This outputs the same value as the mean function
+
+```
+
+# Step 2
+```{r}
+# Question 6
+maxH <- max(height) # 72
+
+# Question 7
+minW <- min(weight) # 130
+
+```
+
+# Step 3
+```{r}
+# Question 8
+new_weight <- weight + 5
+
+# Question 9
+weight_height_ratios <- new_weight/height
+```
+
+# Step 4
+```{r}
+# Question 10
+if(maxH > 60) print("yes") else print("no")
+
+# Question 11
+if(minW > a) print("yes") else print("no")
+
+```
