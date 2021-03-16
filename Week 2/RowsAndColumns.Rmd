@@ -1,0 +1,32 @@
+# Task 1
+```{r}
+# Creating a new mtcars dataframe
+my_mtcars <- mtcars
+
+# Adding a new variable to the new dataframe
+# The new variable will be the engine displacement divided by the number of cylinders
+my_mtcars$enginedisp_per_cyl <- my_mtcars$disp/my_mtcars$cyl
+
+# Summarizing the new variable in my_mtcars
+summary(my_mtcars$enginedisp_per_cyl)
+
+```
+
+# Task 2
+```{r}
+
+Pets <- c(4, 0, 1, 0, 2)
+Order <- c(1, 2, 1, 3, 2)
+Siblings <- c(2, 3, 0, 2, 4)
+UserID <- c("RC", "TJ", "JJ", "MA", "MB")
+
+myFriends <- data.frame(UserID, Pets, Order, Siblings)
+str(myFriends)
+summary(myFriends)
+
+myFriends$UserID
+myFriends$Pets
+myFriends$Order
+myFriends$Siblings
+
+```
