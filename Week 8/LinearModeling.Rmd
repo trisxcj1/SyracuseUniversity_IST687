@@ -1,0 +1,77 @@
+# Set up
+```{r}
+library(readxl)
+library(tidyverse)
+library(ggthemes)
+
+```
+
+# Step 1: Data Loading
+```{r}
+# Reading in the data
+df <- data.frame(read_excel(data_path))
+
+# Renaming the columns based on the information provided
+df_colnames <- c("num_of_fawn", "adult_population", "annual_precipitation", "winter_severity")
+colnames(df) <- df_colnames
+
+# Inspecting the data
+str(df)
+
+```
+
+# Step 2: Plotting
+```{r}
+# Plot of the number of fawn vs the adult population
+ggplot(df, mapping=aes(x=adult_population, y=num_of_fawn)) +
+  geom_point() +
+  xlab("Adult Antelope Population") +
+  ylab("Number Of Fawn") +
+  ggtitle("Number Of Fawn Versus The Adult Antelope population") +
+  theme_few()
+
+# Plot of the number of fawn vs the annual precipitation
+ggplot(df, mapping=aes(x=annual_precipitation, y=num_of_fawn)) +
+  geom_point() +
+  xlab("Annual Precipitation") +
+  ylab("Number Of Fawn") +
+  ggtitle("Number Of Fawn Versus The Annual precipitation") +
+  theme_few()
+
+# Plot of the number of fawn vs the winter severity
+ggplot(df, mapping=aes(x=winter_severity, y=num_of_fawn)) +
+  geom_point() +
+  xlab("Winter Severity") +
+  ylab("Number Of Fawn") +
+  ggtitle("Number Of Fawn Versus The Winter Severity") +
+  theme_few()
+
+```
+
+# Step 3: Linear Models
+```{r}
+# First linear model: num_of_fawn ~ winter_severity
+linear_model_1 <- lm(num_of_fawn ~ winter_severity, data=df)
+summary(linear_model_1)
+
+# Second linear model: num_of_fawn ~ winter_severity + annual_precipitation
+linear_model_2 <- lm(num_of_fawn ~ winter_severity + annual_precipitation, data=df)
+summary(linear_model_2)
+
+# Third linear model: num_of_fawn ~ winter_severity + annual_precipitation + adult_population
+linear_model_3 <- lm(num_of_fawn ~ winter_severity + annual_precipitation + adult_population, data=df)
+summary(linear_model_3)
+  
+```
+
+# Step 4:
+```{r}
+ggplot(df, mapping=aes(x=adult_population, y=num_of_fawn)) +
+  geom_point() +
+  geom_smooth(method="lm", color=2) +
+  xlab("Adult Antelope Population") +
+  ylab("Number Of Fawn") +
+  ggtitle("Number Of Fawn Versus The Adult Antelope Population\nWith Regression Line") +
+  theme_few()
+
+```
