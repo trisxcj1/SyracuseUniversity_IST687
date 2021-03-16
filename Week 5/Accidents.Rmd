@@ -1,0 +1,53 @@
+# Step 1
+```{r}
+# Loading the required packages
+library(jsonlite)
+library(RCurl)
+library(sqldf)
+
+# Load the data
+JSON_dataURL <- "https://opendata.maryland.gov/resource/pdvh-tf2u.json"
+accidents_df <- jsonlite::fromJSON(txt=JSON_dataURL)
+head(accidents_df, 5)
+
+```
+
+# Step 2
+```{r}
+# Checking the data
+str(accidents_df)
+
+```
+
+# Step 3
+```{r}
+# Removing the whitespace from DAY_OF_WEEK
+accidents_df$day_of_week <- gsub("\\s+", "", accidents_df$day_of_week)
+
+# How many accidents happened on SUNDAY?
+sqldf("select count(*) as Number_Of_Accidents from accidents_df where day_of_week='SUNDAY'") # 95 accidents happened on SUNDAY
+
+# How many accidents has injuries?
+sqldf("select count(*) as Number_Of_Accidents from accidents_df where injury='YES' and injury is not null") # 301 accidents
+
+# List the injuries by day
+sqldf("select day_of_week, count(*) as Number_Of_Accidents from accidents_df where injury='YES' group by day_of_week")
+
+```
+
+# Step 4
+```{r}
+# How many accidents happened on SUNDAY?
+tapply(accidents_df$day_of_week, accidents_df$day_of_week=="SUNDAY", length) # 2373 accidents happened on SUNDAY
+
+# How many accidents has injuries?
+tapply(accidents_df$injury, accidents_df$injury=="YES", length) # 6433 accidents
+
+# List the injuries by day
+tapply(
+  accidents_df[accidents_df$injury == "YES", ]$injury,
+  accidents_df[accidents_df$injury == "YES", ]$day_of_week,
+  length
+)
+
+```
