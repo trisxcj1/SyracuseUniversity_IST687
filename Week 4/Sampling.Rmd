@@ -1,0 +1,83 @@
+
+# Step 1
+```{r}
+# Calling the package to use the `skewness` function
+library(moments)
+library(tm)
+my_seed = set.seed(1234)
+
+# Question 1
+printVecInfo <- function(vector){
+  # This function takes a vector as input
+  # Returns print statements with summary stats about the vector
+  
+  # Question 2
+  print("Mean: " + as.String(mean(vector)))
+  print("Median: " + as.String(median(vector)))
+  print("Min: " + as.String(min(vector)) + " max: " + as.String(max(vector)))
+  print("sd: " + as.String(sd(vector)))
+  print("quantile (0.05 - 0.95): " + as.String(quantile(vector,probs=c(0.05, 0.95))[1]) + " - " + as.String(quantile(vector,probs=c(0.05, 0.95))[2]))
+  print("skewness: " + as.String(skewness(vector)))
+}
+
+# Question 3
+test_vector <- c(1,2,3,4,5,6,7,8,9,10,50)
+printVecInfo(test_vector)
+
+```
+
+# Step 2
+```{r}
+# Question 4
+reds <- rep("Red", 50)
+blues <- rep("Blue", 50)
+jar <- c(reds, blues)
+
+# Question 5
+print("Number of red marbles: " + as.String(sum(jar == "Red")))
+# Yes, there are 50 red marbles
+
+# Question 6
+q6_sample <- sample(jar, size=10, replace=T)
+print("Number of red marbles: " + as.String(sum(q6_sample == "Red")))
+print("Percentage of red marbles: " + as.String(sum(q6_sample == "Red")/length(q6_sample) * 100) + "%")
+
+
+# Question 7
+q7_sample <- replicate(20, sum(sample(jar, size=10, replace=T) == "Red") / 10)
+printVecInfo(q7_sample)
+hist(q7_sample)
+
+
+# Question 8
+q8_sample <- replicate(20, sum(sample(jar, size=100, replace=T) == "Red") / 100)
+printVecInfo(q8_sample)
+hist(q8_sample)
+
+# Question 9
+q9_sample <- replicate(100, sum(sample(jar, size=100, replace=T) == "Red") / 100)
+printVecInfo(q9_sample)
+hist(q9_sample)
+
+```
+
+# step 3
+```{r}
+# Question 10
+temp_df <- airquality
+
+# Question 11
+temp_df_cleaned <- temp_df[complete.cases(temp_df), ]
+sum(is.na(temp_df_cleaned)) # There are no missing values in the cleaned dataframe
+
+# Question 12
+printVecInfo(temp_df_cleaned$Ozone)
+hist(temp_df_cleaned$Ozone)
+
+printVecInfo(temp_df_cleaned$Wind)
+hist(temp_df_cleaned$Wind)
+
+printVecInfo(temp_df_cleaned$Temp)
+hist(temp_df_cleaned$Temp)
+
+```
